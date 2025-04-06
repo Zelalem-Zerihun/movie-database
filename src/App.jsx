@@ -1,9 +1,10 @@
+/* eslint-disable no-unused-vars */
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import SearchBar from "./components/SearchBar";
 import MovieCard from "./components/MovieCard";
 import MovieDetails from "./components/MovieDetails";
-
+import Pagination from "./components/Pagination"; 
 const API_KEY = import.meta.env.VITE_OMDB_API_KEY;
 
 const App = () => {
@@ -11,30 +12,29 @@ const App = () => {
   const [selectedMovie, setSelectedMovie] = useState(null);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(true);
-
+  const [query, setQuery] = useState("movie");
   useEffect(() => {
-    const fetchInitialMovies = async () => {
-      setIsLoading(true);
-      try {
-        const response = await axios.get(
-          `http://www.omdbapi.com/?apikey=${API_KEY}&s=movie`
-        );
-        if (response.data.Response === "True") {
-          setMovies(response.data.Search);
-          setError("");
-        } else {
-          setError(response.data.Error || "No movies found.");
-          setMovies([]);
-        }
-      } catch (err) {
-        setError("An error occurred while fetching initial movies.");
+      const fetchMovies = async (searchQuery, page) => {
+    setIsLoading(true);
+    try {
+      const response = await axios.get(
+        `http://www.omdbapi.com/?apikey=${API_KEY}&s=${searchQuery}&page=${page}`
+      );
+      if (response.data.Response === "True") {
+        setMovies(response.data.Search);
+        setTotalResults(parseInt(response.data.totalResults));
+        setError("");
+      } else {
+        setError(response.data.Error || "No movies found.");
+        setMovies([]);
+      }
+    } catch (err) {
+      setError("An error occurred while fetching data.");
       } finally {
         setIsLoading(false);
       }
-    };
-
-    fetchInitialMovies();
-  }, []);
+    }; // Added missing closing brace for fetchMovies function
+  
 
   const searchMovies = async (query) => {
     setIsLoading(true);
@@ -71,7 +71,26 @@ const App = () => {
       setIsLoading(false);
     }
   };
+  // UPDATED: Page change handlers
+  const handlePrevious = () => {
+    setPageNumber((prev) => Math.max(1, prev - 1));
+  };
 
+  const handleNext = () => {
+    setPageNumber((prev) => prev + 1);
+  };
+
+  // UPDATED: Effect for page changes
+  useEffect(() => {
+    if (query) {
+      fetchMovies(query, pageNumber);
+    }
+  }, [pageNumber, query]); // ADDED: query as dependency
+
+  // UPDATED: Initial fetch using query state
+  useEffect(() => {
+    fetchMovies(query, 1);
+  }, []); // Closing brace for the useEffect function
   return (
     <div className="min-h-screen h-full w-full bg-gray-100 p-4 text-black">
       <div className="h-full flex flex-col w-full">
@@ -81,12 +100,8 @@ const App = () => {
         </div>
         {error && <p className="text-red-500 text-center">{error}</p>}
         <div className="flex-grow w-full relative">
-          {" "}
-          {/* Added relative positioning */}
           {isLoading && (
             <div className="absolute inset-0 flex justify-center items-center bg-gray-100 bg-opacity-80 z-10">
-              {" "}
-              {/* Overlay for loading */}
               <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-blue-500"></div>
             </div>
           )}
@@ -103,6 +118,17 @@ const App = () => {
               />
             ))}
           </div>
+
+          {/* ADDED: Pagination component */}
+          {totalResults > 0 && (
+            <Pagination
+              pageNumber={pageNumber}
+              totalResults={totalResults}
+              onPrevious={handlePrevious}
+              onNext={handleNext}
+              loading={isLoading}
+            />
+          )}
         </div>
         {selectedMovie && (
           <MovieDetails
