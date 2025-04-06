@@ -21,7 +21,7 @@ const SearchBar = ({ onSearch }) => {
         placeholder="Search for a movie..."
         value={query}
         onChange={handleChange}
-        className="w-full px-4 py-2 rounded-md shadow-sm focus:outline-none focus:ring focus:ring-blue-200"
+        className="w-full px-4 py-2 rounded-md text-white shadow-sm focus:outline-none focus:ring focus:ring-blue-200"
       />
       <button
         type="submit"

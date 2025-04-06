@@ -44,6 +44,12 @@ const App = () => {
     fetchMovies(searchQuery, 1);
   };
 
+  const handleHome = () => {
+    setQuery("movie");
+    setPageNumber(1);
+    fetchMovies("movie", 1);
+  };
+
   const handlePrevious = () => {
     setPageNumber((prev) => Math.max(1, prev - 1));
   };
@@ -77,7 +83,17 @@ const App = () => {
   return (
     <div className="min-h-screen h-full w-full bg-gray-100 p-4 text-black">
       <div className="h-full flex flex-col w-full">
-        <h1 className="text-3xl font-bold text-center mb-6">Movie Database</h1>
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-3xl font-bold text-center flex-1">
+            Movie Database
+          </h1>
+          <button
+            onClick={handleHome}
+            className="ml-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+          >
+            Home
+          </button>
+        </div>
         <div className="max-w-md mx-auto mb-8 w-full px-4">
           <SearchBar onSearch={searchMovies} />
         </div>
