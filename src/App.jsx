@@ -4,7 +4,8 @@ import axios from "axios";
 import SearchBar from "./components/SearchBar";
 import MovieCard from "./components/MovieCard";
 import MovieDetails from "./components/MovieDetails";
-import Pagination from "./components/Pagination"; 
+import Pagination from "./components/Pagination";
+
 const API_KEY = import.meta.env.VITE_OMDB_API_KEY;
 
 const App = () => {
@@ -12,13 +13,15 @@ const App = () => {
   const [selectedMovie, setSelectedMovie] = useState(null);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(true);
+  const [pageNumber, setPageNumber] = useState(1);
+  const [totalResults, setTotalResults] = useState(0);
   const [query, setQuery] = useState("movie");
-  useEffect(() => {
-      const fetchMovies = async (searchQuery, page) => {
+
+  const fetchMovies = async (searchQuery, page) => {
     setIsLoading(true);
     try {
       const response = await axios.get(
-        `http://www.omdbapi.com/?apikey=${API_KEY}&s=${searchQuery}&page=${page}`
+        `https://www.omdbapi.com/?apikey=${API_KEY}&s=${searchQuery}&page=${page}&type=movie`
       );
       if (response.data.Response === "True") {
         setMovies(response.data.Search);
@@ -30,48 +33,17 @@ const App = () => {
       }
     } catch (err) {
       setError("An error occurred while fetching data.");
-      } finally {
-        setIsLoading(false);
-      }
-    }; // Added missing closing brace for fetchMovies function
-  
-
-  const searchMovies = async (query) => {
-    setIsLoading(true);
-    try {
-      const response = await axios.get(
-        `http://www.omdbapi.com/?apikey=${API_KEY}&s=${query}`
-      );
-      if (response.data.Response === "True") {
-        setMovies(response.data.Search);
-        setError("");
-      } else {
-        setError(response.data.Error || "No movies found.");
-        setMovies([]);
-      }
-    } catch (err) {
-      setError("An error occurred while fetching data.");
     } finally {
       setIsLoading(false);
     }
   };
 
-  const fetchMovieDetails = async (id) => {
-    setIsLoading(true);
-    try {
-      const response = await axios.get(
-        `http://www.omdbapi.com/?apikey=${API_KEY}&i=${id}`
-      );
-      console.log("Fetched Movie Details:", response.data); // For debugging
-      setSelectedMovie(response.data);
-    } catch (err) {
-      setError("An error occurred while fetching movie details.");
-      console.error("Error fetching movie details:", err); // For debugging
-    } finally {
-      setIsLoading(false);
-    }
+  const searchMovies = (searchQuery) => {
+    setQuery(searchQuery);
+    setPageNumber(1);
+    fetchMovies(searchQuery, 1);
   };
-  // UPDATED: Page change handlers
+
   const handlePrevious = () => {
     setPageNumber((prev) => Math.max(1, prev - 1));
   };
@@ -80,17 +52,28 @@ const App = () => {
     setPageNumber((prev) => prev + 1);
   };
 
-  // UPDATED: Effect for page changes
   useEffect(() => {
-    if (query) {
-      fetchMovies(query, pageNumber);
-    }
-  }, [pageNumber, query]); // ADDED: query as dependency
+    fetchMovies(query, pageNumber);
+  }, [pageNumber]);
 
-  // UPDATED: Initial fetch using query state
   useEffect(() => {
-    fetchMovies(query, 1);
-  }, []); // Closing brace for the useEffect function
+    fetchMovies("movie", 1);
+  }, []);
+
+  const fetchMovieDetails = async (id) => {
+    setIsLoading(true);
+    try {
+      const response = await axios.get(
+        `https://www.omdbapi.com/?apikey=${API_KEY}&i=${id}`
+      );
+      setSelectedMovie(response.data);
+    } catch (err) {
+      setError("Error fetching movie details");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen h-full w-full bg-gray-100 p-4 text-black">
       <div className="h-full flex flex-col w-full">
@@ -119,7 +102,7 @@ const App = () => {
             ))}
           </div>
 
-          {/* ADDED: Pagination component */}
+          {/* Pagination Component */}
           {totalResults > 0 && (
             <Pagination
               pageNumber={pageNumber}
